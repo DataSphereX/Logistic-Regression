@@ -1,0 +1,225 @@
+---
+title: "GLM"
+author: "Ganesan"
+date: "01/14/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv('C:/Users/z725312/Documents/datascience/GLMG5/data/Cellphone-1.csv', header=TRUE)
+```
+
+```{r}
+head(data)
+```
+
+```{r}
+names(data)
+```
+
+```{r}
+str(data)
+```
+
+
+```{r}
+#Factorizing relavent colunmns
+data$Churn <- factor(data$Churn, levels = c(0,1), labels = c("No", "Yes"))
+data$ContractRenewal <- factor(data$ContractRenewal, levels = c(0,1), labels = c("No", "Yes"))
+data$DataPlan <- factor(data$DataPlan, levels = c(0,1), labels = c("No", "Yes"))
+data$CustServCalls <- factor(data$CustServCalls, levels = c(0,1,2,3,4,5,6,7,8,9), labels = c(0,1,2,3,4,5,6,7,8,9))
+```
+
+```{r}
+summary(data)
+```
+
+```{r}
+summary(data[data$Churn == "Yes",])
+```
+
+```{r}
+summary(data[data$Churn == "No",])
+```
+
+```{r}
+round(nrow(data[data$Churn == "Yes",])/nrow(data)*100,2)
+```
+
+
+```{r}
+boxplot(data$AccountWeeks~data$Churn, main="Account Weeks by Churn", xlab="Churn", ylab="Account Weeks", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$AccountWeeks)
+```
+
+
+```{r}
+tapply(data$AccountWeeks, data$Churn, summary)
+```
+
+
+```{r}
+boxplot(data[data$DataPlan == "Yes",]$DataUsage~data[data$DataPlan == "Yes",]$Churn, main="Data Usage by Churn", xlab="Churn", ylab="Data Usage", col=c('blue','orange'))
+```
+
+```{r}
+summary(data[data$DataPlan == "Yes",]$DataUsage)
+```
+
+```{r}
+tapply(data[data$DataPlan == "Yes",]$DataUsage, data[data$DataPlan == "Yes",]$Churn, summary)
+```
+
+
+
+```{r}
+boxplot(data$DayMins~data$Churn, main="DayMins by Churn", xlab="Churn", ylab="DayMins", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$DayMins)
+```
+
+
+```{r}
+tapply(data$DayMins, data$Churn, summary)
+```
+
+```{r}
+boxplot(data$DayCalls~data$Churn, main="DayCalls by Churn", xlab="DayCalls", ylab="Churn", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$DayCalls)
+```
+
+
+```{r}
+tapply(data$DayCalls, data$Churn, summary)
+```
+
+
+
+```{r}
+boxplot(data$MonthlyCharge~data$Churn, main="MonthlyCharge by Churn", xlab="MonthlyCharge", ylab="Churn", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$MonthlyCharge)
+```
+
+```{r}
+tapply(data$MonthlyCharge, data$Churn, summary)
+```
+
+
+
+```{r}
+boxplot(data$OverageFee~data$Churn, main="OverageFee by Churn", xlab="Churn", ylab="OverageFee", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$OverageFee)
+```
+
+```{r}
+tapply(data$OverageFee, data$Churn, summary)
+```
+
+
+```{r}
+boxplot(data$RoamMins~data$Churn, main="RoamMins by Churn", xlab="Churn", ylab="RoamMins", col=c('blue','orange'))
+```
+
+```{r}
+summary(data$RoamMins)
+```
+
+```{r}
+tapply(data$RoamMins, data$Churn, summary)
+```
+
+```{r}
+summary(data)
+```
+
+```{r}
+
+```
+
+
+```{r}
+{
+  par(mfrow=c(3,3))
+  plot(density(data$AccountWeeks), main="AccountWeeks")
+  plot(density(data[data$DataPlan == "Yes",]$DataUsage), main="DataUsage for people with data plan")
+  plot(density(data$DayMins), main="DayMins")
+  plot(density(data$DayCalls), main="DayCalls")
+  plot(density(data$MonthlyCharge), main="MonthlyCharge")
+  plot(density(data$OverageFee), main="OverageFee")
+  plot(density(data$RoamMins), main="RoamMins")
+}
+```
+
+```{r}
+table(Churn = data$Churn, ContractRenewal = data$ContractRenewal)
+```
+
+
+```{r}
+chisq.test( table(data$Churn, data$ContractRenewal))
+```
+
+
+```{r}
+ggplot(data %>% group_by(ContractRenewal) %>% count(ContractRenewal, Churn)  %>%  # Group by region and species, then count number in each group
+         mutate(pct=n/sum(n)),              # Calculate percent within each region
+       aes(ContractRenewal, n, fill=Churn)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=0.5))
+```
+
+```{r}
+table(Churn = data$Churn, DataPlan = data$DataPlan)
+```
+
+
+```{r}
+chisq.test( table(data$Churn, data$DataPlan))
+```
+
+```{r}
+ggplot(data %>% group_by(DataPlan) %>% count(DataPlan, Churn)  %>%  # Group by region and species, then count number in each group
+         mutate(pct=n/sum(n)),              # Calculate percent within each region
+       aes(DataPlan, n, fill=Churn)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=0.5))
+```
+
+```{r}
+table(Churn = data$Churn, CustServCalls = data$CustServCalls)
+```
+
+
+```{r}
+chisq.test( table(data$Churn, data$CustServCalls))
+```
+
+```{r}
+ggplot(data %>% group_by(CustServCalls) %>% count(CustServCalls, Churn)  %>%  # Group by region and species, then count number in each group
+         mutate(pct=n/sum(n)),              # Calculate percent within each region
+       aes(CustServCalls, n, fill=Churn)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=1))
+```
+

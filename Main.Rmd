@@ -1,0 +1,143 @@
+---
+title: "GLM Group 5 GLM Main"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+**Step 0: Load the data**
+
+```{r setup, include=FALSE}
+mydata <- read.csv('C:/Users/z725312/Documents/datascience/GLMG5/data/Cellphone-1.csv', header=TRUE)
+names(mydata)
+```
+
+```{r}
+#Factorizing relavent colunmns
+mydata$Churn <- factor(mydata$Churn, levels = c(0,1), labels = c("No", "Yes"))
+mydata$ContractRenewal <- factor(mydata$ContractRenewal, levels = c(0,1), labels = c("No", "Yes"))
+mydata$DataPlan <- factor(mydata$DataPlan, levels = c(0,1), labels = c("No", "Yes"))
+#mydata$CustServCalls <- factor(mydata$CustServCalls, levels = c(0,1,2,3,4,5,6,7,8,9), labels = c(0,1,2,3,4,5,6,7,8,9))
+```
+
+```{r}
+mydata$AccountWeeks = mydata$AccountWeeks/100
+mydata$DayMins = mydata$DayMins/60
+mydata$DayCalls = mydata$DayCalls/100
+mydata$MonthlyCharge = mydata$MonthlyCharge/10
+```
+
+
+```{r}
+#Splitting dataset:
+library(caTools)
+set.seed(123)
+split=sample.split(mydata$Churn,SplitRatio =0.7)
+dev_set=subset(mydata,split==TRUE)
+test_set=subset(mydata,split==FALSE)
+```
+
+
+**Step 1: Overall Significance of the logistics regression to test applicabiliy**
+
+```{r}
+logit <- glm(Churn~., data=dev_set, family = binomial)
+library(lmtest)
+lrtest(logit)
+```
+
+Interpretation:
+The overall test of the model significance based on chisq test above is overwhelmingly significant indicating the likelihood of loyalty depends upon Brand, Products and Shopping
+
+**Step 2: Macfadden R2 and interpretation**
+
+```{r}
+library(pscl)
+pR2(logit)
+```
+
+Interpretation:
+Based on McFadden R2, we conculde that 43.56 percent of the uncertainity of the intercept only model (model 2) has been explained by the Full Model (model 1). 
+
+**Step 3: Individual Coefficient's significance and interpretation**
+
+```{r}
+summary(logit)
+```
+
+Interpretation:
+Only attitude toward brand is overwhelmingly significant in explaining loyalty (Look at Pr(>|z|) which is the p-value).  
+
+** Step 4: Explainatory power of Odds Ratio **
+
+Odds:
+```{r}
+round(exp(coef(logit)), 3)
+```
+
+Probability:
+```{r}
+round(exp(coef(logit))/(1+exp(coef(logit))), 3) * 100
+```
+
+If Odds is more than 1, the probability of influence will be more than 50. So we cannot ignore the variables with Odds more than 1.
+
+** Step 5: Confustion Matrix (Misclassification Matrix) **
+
+```{r}
+prediction <- predict(logit, type = "response", data = dev_set)
+cutoff=floor(prediction > 0.5)
+table(Actual = dev_set$Churn, Predicted= cutoff)
+```
+
+** Step 6: ROC Plot - Receiver Operating Characteristics **
+
+```{r}
+library("ROCR")    
+pred <- prediction(prediction, dev_set$Churn)    
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")     
+plot(perf, col=rainbow(7), main="ROC curve Admissions", xlab="Specificity", 
+     ylab="Sensitivity") 
+```
+
+```{r}
+auc <- performance(pred,"auc"); 
+as.numeric(auc@y.values)
+```
+
+
+Prediction
+```{r}
+pred_test <- predict(logit, type = "response", newdata = test_set)
+cutoff1=floor(pred_test > 0.5) 
+table(Actual=test_set$Churn, predicted = cutoff1)
+```
+
+```{r}
+library(caret)
+cm <- data.frame(Churn = test_set$Churn, cutoff1)
+cm$cutoff1 = as.factor(cm$cutoff1)
+confusionMatrix(as.numeric(cm$Churn)-1, as.numeric(cm$cutoff1)-1)
+```
+
+```{r}
+auc_test_result <- performance(pred_test_result,"auc"); 
+as.numeric(auc_test_result@y.values)
+```
+
+
+Prediction with cutoff
+```{r}
+pred_test_cutoff <- predict(logit, type = "response", newdata = test_set)
+cutoff2=floor(pred_test_cutoff > 0.077) 
+table(Actual=test_set$Churn, predicted = cutoff2)
+```
+
+
+```{r}
+library(caret)
+cm <- data.frame(Churn = test_set$Churn, cutoff2)
+cm$cutoff2 = as.factor(cm$cutoff2)
+confusionMatrix(as.numeric(cm$Churn)-1, as.numeric(cm$cutoff2)-1)
+```
+
